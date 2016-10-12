@@ -497,7 +497,7 @@ mysql2pgsql_copy_data(void *arg)
 
 		//fprintf(stderr, "relname %s, query %s \n", relname, curr->query ? curr->query : "");
 
-		if (curr->query || *curr->query == '\0')
+		if (curr && (curr->query || *curr->query == '\0'))
 			appendPQExpBufferStr(query, curr->query);
 		else
 			appendPQExpBuffer(query, STMT_SELECT,
