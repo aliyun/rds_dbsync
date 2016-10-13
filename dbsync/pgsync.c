@@ -15,7 +15,6 @@
 #include "pg_logicaldecode.h"
 #include "pqexpbuffer.h"
 #include "pgsync.h"
-#include "nodes/pg_list.h"
 #include "libpq/pqsignal.h"
 
 #include <time.h>
