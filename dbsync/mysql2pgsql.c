@@ -500,6 +500,11 @@ mysql2pgsql_copy_data(void *arg)
 							 nspname,
 							 relname);
 
+                if (get_ddl_only)
+		{
+			appendPQExpBufferStr(query, "limit 1");
+		}
+
 		fprintf(stderr, "Query to get source data for target table %s: %s \n", relname, query->data);
 		ret = mysql_query(origin_conn, query->data);
 		if (ret != 0)
