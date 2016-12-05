@@ -19,10 +19,7 @@
 #include <time.h>
 
 #ifndef WIN32
-#include <zlib.h>
-#include <stdint.h>
 #include <pthread.h>
-#include <sys/time.h>
 #endif
 
 #include "mysql.h"
