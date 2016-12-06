@@ -8,6 +8,9 @@
 #include <unistd.h>
 
 extern bool get_ddl_only; 
+extern bool simple_wo_part;
+extern bool first_col_as_dist_key;
+extern int buffer_size;
 
 static int load_table_list_file(const char *filename, char*** p_tables, char*** p_queries);
 
@@ -22,6 +25,7 @@ main(int argc, char **argv)
 	char	*sport = NULL;
 	//char *tabname = NULL;
 	int res_getopt = 0;
+	char *target_schema = NULL;
 	char *table_list_file = NULL;
 	char **tables = NULL, **queries = NULL;
 
@@ -53,7 +57,7 @@ main(int argc, char **argv)
 
 	src.port = atoi(sport);
 
-	while ((res_getopt = getopt(argc, argv, ":l:j:d")) != -1)
+	while ((res_getopt = getopt(argc, argv, ":l:j:dnfhs:b:")) != -1)
 	{
 		switch (res_getopt)
 		{
@@ -63,17 +67,34 @@ main(int argc, char **argv)
 			case 'j':
 				num_thread = atoi(optarg);
 				break;
+			case 'b':
+				buffer_size = 1024 * atoi(optarg);
+				break;
+			case 's':
+				target_schema = optarg;
+				break;
 			case ':':
-				fprintf(stderr, "No value specified for -%c", optopt);
+				fprintf(stderr, "No value specified for -%c\n", optopt);
 				break;
 			case 'd':
 				get_ddl_only = true;
 				break;
+			case 'n':
+				simple_wo_part = true;
+				break;
+			case 'f':
+				first_col_as_dist_key = true;
+				break;
+			case 'h':
+				fprintf(stderr, "Usage: -l <table list file> -j <thread number> -d -n -f -s -b -h\n");
+				fprintf(stderr, " -l specifies a file with table listed;\n -j specifies number of threads to do the job;\n -d means get DDL only without fetching data;\n -n means no partion info in DDLs;\n -f means taking first column as distribution key;\n -s specifies the target schema;\n -b specifies the buffer size in KB used to sending copy data to target db, the default is 0");
+				return 0;
 			case '?':
 				fprintf(stderr, "Unsupported option: %c", optopt);	
 				break;
 			default:
 				fprintf(stderr, "Parameter parsing error: %c", res_getopt);
+				return -1;
 				
 		}
 	}
@@ -94,7 +115,7 @@ main(int argc, char **argv)
 	if (get_ddl_only)
 		num_thread = 1;
 
-	return mysql2pgsql_sync_main(desc , num_thread, &src);
+	return mysql2pgsql_sync_main(desc , num_thread, &src, target_schema);
 }
 
 
@@ -212,7 +233,7 @@ int load_table_list_file(const char *filename, char*** p_tables, char*** p_queri
 				table_array[cur_table] = table_begin;
 				query_array[cur_table] = query_begin;
 				cur_table++;
-				fprintf(stderr, "Adding table: %s\n", table_begin);
+				fprintf(stderr, "-- Adding table: %s\n", table_begin);
 			}
 			
 			table_begin = p + 1;
