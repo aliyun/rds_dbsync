@@ -126,7 +126,7 @@ typedef struct Task_hd
 extern int db_sync_main(char *src, char *desc, char *local, int nthread);
 
 
-extern int mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd);
+extern int mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target_schema);
 
 
 #ifdef __cplusplus

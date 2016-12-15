@@ -21,7 +21,7 @@ pgsql_lib_dir := $(shell $(PG_CONFIG) --libdir)
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 
-RPATH_LDFLAGS='-Wl,-rpath,$$ORIGIN,-rpath,$(mysql_lib_dir),-rpath,$(pgsql_lib_dir)'
+RPATH_LDFLAGS='-Wl,-rpath,$$ORIGIN,-rpath,$$ORIGIN/lib,-rpath,$$ORIGIN/../lib,-rpath,$(mysql_lib_dir),-rpath,$(pgsql_lib_dir)'
 export RPATH_LDFLAGS
 
 all: demo.o dbsync-pgsql2pgsql.o mysql2pgsql.o dbsync-mysql2pgsql.o readcfg.o
@@ -31,3 +31,9 @@ all: demo.o dbsync-pgsql2pgsql.o mysql2pgsql.o dbsync-mysql2pgsql.o readcfg.o
 
 clean:
 	rm -rf *.o pgsql2pgsql mysql2pgsql demo
+
+pkg_mysql2pg:
+	mkdir -p install
+	mkdir -p install/bin
+	mkdir -p install/lib
+	cp -fr mysql2pgsql install/bin
