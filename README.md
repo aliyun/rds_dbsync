@@ -57,4 +57,4 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 6. 执行dbsync：cd install; bin/mysql2pgsql ; bin/pgsql2pgsql ; bin/demo
 
 ## 问题反馈
-有任何问题，请反馈到 https://github.com/aliyun/rds_dbsync issues 或联系 wenjing.zwj@alibaba-inc.com
+有任何问题，请反馈到 https://github.com/aliyun/rds_dbsync issues 或联系 158306855@qq.com
