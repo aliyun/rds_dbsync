@@ -73,3 +73,8 @@ table5: select * from table_big where column1 >= '2016-08-05'
     ./mysql2pgsql -l tab_list.txt
     
     
+
+
+
+# mysql2pgsql工具下载链接
+请详细阅读阿里云的开源项目rds_dbsync并进行编译安装 https://github.com/aliyun/rds_dbsync/blob/master/doc/design.md
