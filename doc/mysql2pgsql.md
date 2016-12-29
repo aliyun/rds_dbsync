@@ -68,11 +68,14 @@ table5: select * from table_big where column1 >= '2016-08-05'
 	t1
 	t2 : select * from t2 where c1 > 138888
 	```
-    2) 执行下面的命令，同步指定的t1和t2表（注意t2表只迁移符合c1 > 138888条件的数据）：
+	2) 执行下面的命令，同步指定的t1和t2表（注意t2表只迁移符合c1 > 138888条件的数据）：
     
-    ./mysql2pgsql -l tab_list.txt
-    
-    
+	./mysql2pgsql -l tab_list.txt
+
+
+	3) 支持按表为单位忽略迁移中发生的错误，例如忽略数据约束校验失败或编码校验失败
+
+	只需在 my.cfg 里配置 ignore_copy_error_count_each_table ，设置需要忽略的最大行。如果单张表中错误行超过这个值，数据迁移也会失败。   
 
 
 
