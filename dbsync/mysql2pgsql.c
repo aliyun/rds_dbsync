@@ -253,7 +253,7 @@ connect_to_mysql(mysql_conn_info* hd)
  * Entry point for mysql2pgsql
  */
 int 
-mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target_schema)
+mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target_schema, uint32 ignore_error_count)
 {
 	int 		i = 0;
 	Thread_hd th_hd;
@@ -281,6 +281,7 @@ mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target
 	th_hd.nth = nthread;
 	th_hd.desc = desc;
 	th_hd.mysql_src = hd;
+	th_hd.ignore_error_count = ignore_error_count;
 
 	conn_src = connect_to_mysql(hd);
 	if (conn_src == NULL)
@@ -584,6 +585,13 @@ mysql2pgsql_copy_data(void *arg)
 						 PQescapeIdentifier(target_conn, relname,
 											strlen(relname)));
 
+		if (isgp && hd->ignore_error_count > 0)
+		{
+			appendPQExpBuffer(query, " SEGMENT REJECT LIMIT %u",
+									hd->ignore_error_count);
+
+		}
+
 		res2 = PQexec(target_conn, query->data);
 		if (PQresultStatus(res2) != PGRES_COPY_IN)
 		{
@@ -607,7 +615,7 @@ mysql2pgsql_copy_data(void *arg)
 				}
 			
 				/* value of the field is NULL if it is fact NULL */
-				if(lengths[i] >= 0 && row[i] != NULL)
+				if(lengths[i] > 0 && row[i] != NULL)
 				{
 					quote_literal_local_withoid(&s_tmp, row[i], column_oids[i], query);
 				}

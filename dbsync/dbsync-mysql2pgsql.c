@@ -28,6 +28,8 @@ main(int argc, char **argv)
 	char *target_schema = NULL;
 	char *table_list_file = NULL;
 	char **tables = NULL, **queries = NULL;
+	char	*ignore_copy_error_count_each_table_str = NULL;
+	uint32	ignore_copy_error_count_each_table = 0;
 
 	cfg = init_config("my.cfg");
 	if (cfg == NULL)
@@ -45,6 +47,7 @@ main(int argc, char **argv)
 	get_config(cfg, "src.mysql", "encodingdir", &src.encodingdir);
 	get_config(cfg, "src.mysql", "encoding", &src.encoding);
 	get_config(cfg, "desc.pgsql", "connect_string", &desc);
+	get_config(cfg, "desc.pgsql", "ignore_copy_error_count_each_table", &ignore_copy_error_count_each_table_str);
 
 	if (src.host == NULL || sport == NULL ||
 		src.user == NULL || src.passwd == NULL ||
@@ -56,6 +59,10 @@ main(int argc, char **argv)
 	}
 
 	src.port = atoi(sport);
+
+	ignore_copy_error_count_each_table = atoi(ignore_copy_error_count_each_table_str);
+
+	fprintf(stderr, "ignore copy error count %u each table\n", ignore_copy_error_count_each_table);
 
 	while ((res_getopt = getopt(argc, argv, ":l:j:dnfhs:b:")) != -1)
 	{
@@ -115,7 +122,7 @@ main(int argc, char **argv)
 	if (get_ddl_only)
 		num_thread = 1;
 
-	return mysql2pgsql_sync_main(desc , num_thread, &src, target_schema);
+	return mysql2pgsql_sync_main(desc , num_thread, &src, target_schema, ignore_copy_error_count_each_table);
 }
 
 
