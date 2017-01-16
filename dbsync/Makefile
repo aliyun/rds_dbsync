@@ -1,10 +1,10 @@
 #Change the following according to mysql installation path
 # Minimal requriement: Mysql >= 5.6, Pgsql >= 9.3
-mysql_install_dir=/usr
+mysql_install_dir=/usr/local/Cellar/mysql/5.7.15
 mysql_include_dir=$(mysql_install_dir)/include/mysql
 mysql_lib_dir=$(mysql_install_dir)/lib64/mysql
 
-pgsql_install_dir=/usr/pgsql-9.6
+pgsql_install_dir=/usr/local/Cellar/postgresql/9.5.4_1
 
 PGFILEDESC = "ali_recvlogical"
 NAME = ali_recvlogical

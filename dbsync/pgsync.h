@@ -89,6 +89,8 @@ typedef struct Thread_hd
 	const char *snapshot;
 	char		*src;
 	int			src_version;
+	bool		src_is_greenplum;
+
 	char		*slot_name;
 
 	mysql_conn_info	*mysql_src;

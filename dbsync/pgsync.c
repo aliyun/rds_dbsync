@@ -47,7 +47,7 @@ static volatile bool time_to_abort = false;
 
 #define RECONNECT_SLEEP_TIME 5
 
-#define ALL_DB_TABLE_SQL "select n.nspname, c.relname from pg_class c, pg_namespace n where n.oid = c.relnamespace and c.relkind = 'r' and n.nspname not in ('pg_catalog','tiger','tiger_data','topology','postgis','information_schema') order by c.relpages desc;"
+#define ALL_DB_TABLE_SQL "select n.nspname, c.relname from pg_class c, pg_namespace n where n.oid = c.relnamespace and c.relkind = 'r' and n.nspname not in ('pg_catalog','tiger','tiger_data','topology','postgis','information_schema','gp_toolkit','pg_aoseg','pg_toast') order by c.relpages desc;"
 #define GET_NAPSHOT "SELECT pg_export_snapshot()"
 
 #define TASK_ID "1"
@@ -136,7 +136,7 @@ copy_table_data(void *arg)
 			break;
 		}
 
-		start_copy_origin_tx(origin_conn, hd->snapshot, hd->src_version);
+		start_copy_origin_tx(origin_conn, hd->snapshot, hd->src_version, hd->desc_is_greenplum);
 		start_copy_target_tx(target_conn, hd->desc_version, hd->desc_is_greenplum);
 
 		nspname = curr->schemaname;
@@ -255,7 +255,6 @@ db_sync_main(char *src, char *desc, char *local, int nthread)
 					after; 
 	double		elapsed_msec = 0;
 	Decoder_handler *hander = NULL;
-	int	src_version = 0;
 	struct Thread *decoder = NULL;
 	bool	replication_sync = false;
 	bool	need_full_sync = false;
@@ -283,6 +282,8 @@ db_sync_main(char *src, char *desc, char *local, int nthread)
 		fprintf(stderr, "conn to src faild: %s", PQerrorMessage(origin_conn_repl));
 		return 1;
 	}
+	th_hd.src_version = PQserverVersion(origin_conn_repl);
+	th_hd.src_is_greenplum = is_greenplum(origin_conn_repl);
 
 	desc_conn = pglogical_connect(desc, EXTENSION_NAME "_main");
 	if (desc_conn == NULL)
@@ -298,43 +299,43 @@ db_sync_main(char *src, char *desc, char *local, int nthread)
 	if (local_conn == NULL)
 	{
 		fprintf(stderr, "init local conn failed: %s", PQerrorMessage(local_conn));
-		return 1;
-	}
-	ExecuteSqlStatement(local_conn, "CREATE TABLE IF NOT EXISTS sync_sqls(id bigserial, sql text)");
-	ExecuteSqlStatement(local_conn, "CREATE TABLE IF NOT EXISTS db_sync_status(id bigserial primary key, full_s_start timestamp DEFAULT NULL, full_s_end timestamp DEFAULT NULL, decoder_start timestamp DEFAULT NULL, apply_id bigint DEFAULT NULL)");
-	ExecuteSqlStatement(local_conn, "insert into db_sync_status (id) values (" TASK_ID ");");
-	get_task_status(local_conn, &full_start, &full_end, &decoder_start, &apply_id);
-
-	if (full_start && full_end == NULL)
-	{
-		fprintf(stderr, "full sync start %s, but not finish.truncate all data and restart dbsync\n", full_start);
-		return 1;
-	}
-	else if(full_start == NULL && full_end == NULL)
-	{
 		need_full_sync = true;
-		fprintf(stderr, "new dbsync task");
 	}
-	else if(full_start && full_end)
+	else
 	{
-		fprintf(stderr, "full sync start %s, end %s restart decoder sync\n", full_start, full_end);
-		need_full_sync = false;
+		ExecuteSqlStatement(local_conn, "CREATE TABLE IF NOT EXISTS sync_sqls(id bigserial, sql text)");
+		ExecuteSqlStatement(local_conn, "CREATE TABLE IF NOT EXISTS db_sync_status(id bigserial primary key, full_s_start timestamp DEFAULT NULL, full_s_end timestamp DEFAULT NULL, decoder_start timestamp DEFAULT NULL, apply_id bigint DEFAULT NULL)");
+		ExecuteSqlStatement(local_conn, "insert into db_sync_status (id) values (" TASK_ID ");");
+		get_task_status(local_conn, &full_start, &full_end, &decoder_start, &apply_id);
+
+		if (full_start && full_end == NULL)
+		{
+			fprintf(stderr, "full sync start %s, but not finish.truncate all data and restart dbsync\n", full_start);
+			return 1;
+		}
+		else if(full_start == NULL && full_end == NULL)
+		{
+			need_full_sync = true;
+			fprintf(stderr, "new dbsync task");
+		}
+		else if(full_start && full_end)
+		{
+			fprintf(stderr, "full sync start %s, end %s restart decoder sync\n", full_start, full_end);
+			need_full_sync = false;
+		}
+
+		if (decoder_start)
+		{
+			fprintf(stderr, "decoder sync start %s\n", decoder_start);
+		}
+		
+		if (apply_id)
+		{
+			fprintf(stderr, "decoder apply id %s\n", apply_id);
+		}
 	}
 
-	if (decoder_start)
-	{
-		fprintf(stderr, "decoder sync start %s\n", decoder_start);
-	}
-	
-	if (apply_id)
-	{
-		fprintf(stderr, "decoder apply id %s\n", apply_id);
-	}
-
-	src_version = PQserverVersion(origin_conn_repl);
-	is_greenplum(origin_conn_repl);
-	th_hd.src_version = src_version;
-	if (src_version >= 90400)
+	if (th_hd.src_is_greenplum == false && th_hd.src_version >= 90400)
 	{
 		replication_sync = true;
 		if (!is_slot_exists(origin_conn_repl, EXTENSION_NAME "_slot"))
@@ -369,10 +370,18 @@ db_sync_main(char *src, char *desc, char *local, int nthread)
 
 	if (need_full_sync)
 	{
-		const char	   *setup_query =
-			"BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY;\n";
-		PQExpBuffer	query;
-		
+		const char	   *setup_query = NULL;
+		PQExpBuffer		query;
+
+		if (th_hd.src_is_greenplum == false)
+		{
+			setup_query = "BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY;\n";
+		}
+		else
+		{
+			setup_query = "BEGIN";
+		}
+
 		query = createPQExpBuffer();
 		appendPQExpBuffer(query, "%s", setup_query);
 
@@ -391,7 +400,7 @@ db_sync_main(char *src, char *desc, char *local, int nthread)
 
 		if (snapshot == NULL)
 		{
-			if (src_version >= 90200)
+			if (th_hd.src_version >= 90200)
 			{
 				snapshot = get_synchronized_snapshot(origin_conn_repl);
 				th_hd.snapshot = snapshot;

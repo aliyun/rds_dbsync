@@ -61,7 +61,7 @@ extern int ThreadCreate(Thread *th, void *(*start)(void *arg), void *arg);
 extern PGconn *pglogical_connect(const char *connstring, const char *connname);
 extern bool is_greenplum(PGconn *conn);
 extern size_t quote_literal_internal(char *dst, const char *src, size_t len);
-extern int start_copy_origin_tx(PGconn *conn, const char *snapshot, int pg_version);
+extern int start_copy_origin_tx(PGconn *conn, const char *snapshot, int pg_version, bool is_greenplum);
 extern int finish_copy_origin_tx(PGconn *conn);
 extern int start_copy_target_tx(PGconn *conn, int pg_version, bool is_greenplum);
 extern int finish_copy_target_tx(PGconn *conn);
