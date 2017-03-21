@@ -60,7 +60,10 @@ main(int argc, char **argv)
 
 	src.port = atoi(sport);
 
-	ignore_copy_error_count_each_table = atoi(ignore_copy_error_count_each_table_str);
+	if (ignore_copy_error_count_each_table_str)
+	{
+		ignore_copy_error_count_each_table = atoi(ignore_copy_error_count_each_table_str);
+	}
 
 	fprintf(stderr, "ignore copy error count %u each table\n", ignore_copy_error_count_each_table);
 

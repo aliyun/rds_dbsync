@@ -195,7 +195,7 @@ connect_to_mysql(mysql_conn_info* hd)
 		ret = mysql_options(m_mysqlConnection, MYSQL_SET_CHARSET_NAME, hd->encoding);
 		if (ret != 0)
 		{
-			fprintf(stderr, "set CHARSET_NAME to %s error: %s", hd->encoding, mysql_error(m_mysqlConnection));
+			fprintf(stderr, "set CHARSET_NAME to %s error: %s\n", hd->encoding, mysql_error(m_mysqlConnection));
 			return NULL;
 		}
 	}
@@ -204,7 +204,7 @@ connect_to_mysql(mysql_conn_info* hd)
 		ret = mysql_options(m_mysqlConnection, MYSQL_SET_CHARSET_DIR, hd->encodingdir);
 		 if (ret != 0)
 		{
-			fprintf(stderr, "set CHARSET_DIR to %s error: %s", hd->encodingdir, mysql_error(m_mysqlConnection));
+			fprintf(stderr, "set CHARSET_DIR to %s error: %s\n", hd->encodingdir, mysql_error(m_mysqlConnection));
 			return NULL;
 		}
 	}
@@ -219,7 +219,7 @@ connect_to_mysql(mysql_conn_info* hd)
 	ret = mysql_options(m_mysqlConnection, MYSQL_OPT_RECONNECT, &m_reConn);
 	 if (ret != 0)
 	{
-		fprintf(stderr, "set OPT_RECONNECT error: %s", mysql_error(m_mysqlConnection));
+		fprintf(stderr, "set OPT_RECONNECT error: %s\n", mysql_error(m_mysqlConnection));
 		return NULL;
 	}
 
@@ -232,7 +232,7 @@ connect_to_mysql(mysql_conn_info* hd)
 				NULL,
 				CLIENT_MULTI_STATEMENTS|CLIENT_MULTI_RESULTS))
 	{
-		fprintf(stderr, "connect error: %s", mysql_error(m_mysqlConnection));
+		fprintf(stderr, "connect error: %s\n", mysql_error(m_mysqlConnection));
 
 		return NULL;
 	}
@@ -240,7 +240,7 @@ connect_to_mysql(mysql_conn_info* hd)
 	ret = mysql_query(m_mysqlConnection, "set unique_checks = 0;");
 	if (ret != 0)
 	{
-		fprintf(stderr, "set unique_checks = 0 error: %s", mysql_error(m_mysqlConnection));
+		fprintf(stderr, "set unique_checks = 0 error: %s\n", mysql_error(m_mysqlConnection));
 		return NULL;
 	}
 
@@ -286,14 +286,14 @@ mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target
 	conn_src = connect_to_mysql(hd);
 	if (conn_src == NULL)
 	{
-		fprintf(stderr, "init src conn failed");
+		fprintf(stderr, "init src conn failed.\n");
 		return 1;
 	}
 
 	desc_conn = pglogical_connect(desc, EXTENSION_NAME "_main");
 	if (desc_conn == NULL)
 	{
-		fprintf(stderr, "init desc conn failed: %s", PQerrorMessage(desc_conn));
+		fprintf(stderr, "init desc conn failed: %s\n", PQerrorMessage(desc_conn));
 		return 1;
 	}
 	th_hd.desc_version = PQserverVersion(desc_conn);
