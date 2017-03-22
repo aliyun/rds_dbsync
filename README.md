@@ -4,10 +4,30 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 
 ## 支持的功能
 
-1. PostgreSQL -> PostgreSQL 全量加增量迁移(秒级同步) pgsql2pgsql
-2. PostgreSQL -> Greenplum 全量加增量迁移（批量，分钟级同步）pgsql2gp
-3. MySQL -> PostgreSQL 全量加增量迁移(秒级同步) mysql2pgsql
-4. MySQL -> Greenplum 全量加增量迁移（批量，分钟级同步）mysql2gp
+1. PostgreSQL -> PostgreSQL pgsql2pgsql
+
+	功能 pg->pg 全量+增量数据同步
+
+	状态：已开源 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/mysql2pgsql.md)
+
+2. MySQL -> PostgreSQL/Greenplum（binlog_minner binlog_loader）
+
+	功能：基于 MySQL binlog 解析的增量数据同步
+
+	状态：已开放二进制 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/mysql2gp.md)
+
+3. PostgreSQL -> PostgreSQL/Greenplum pgsql2gp
+
+	功能：基于 PostgreSQL 逻辑日志的增量数据同步
+
+	状态：未开发完成
+
+4. MySQL -> PostgreSQL/Greenplum mysql2pgsql
+
+	功能：以表为单位的多线程全量数据迁移
+
+	状态：已开源 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/mysql2pgsql.md)
+
 
 ## 项目成员
 该项目由阿里云 PostgreSQL 小组开发，为 PostgreSQL 世界贡献一份力量
@@ -57,4 +77,4 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 6. 执行dbsync：cd install; bin/mysql2pgsql ; bin/pgsql2pgsql ; bin/demo
 
 ## 问题反馈
-有任何问题，请反馈到 https://github.com/aliyun/rds_dbsync issues 或联系 wenjing.zwj@alibaba-inc.com
+有任何问题，请反馈到 https://github.com/aliyun/rds_dbsync issues 或联系 158306855@qq.com

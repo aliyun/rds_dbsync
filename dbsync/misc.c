@@ -158,12 +158,20 @@ quote_literal_internal(char *dst, const char *src, size_t len)
 }
 
 int
-start_copy_origin_tx(PGconn *conn, const char *snapshot, int pg_version)
+start_copy_origin_tx(PGconn *conn, const char *snapshot, int pg_version, bool is_greenplum)
 {
 	PGresult	   *res;
-	const char	   *setup_query =
-		"BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY;\n";
+	const char	   *setup_query = NULL;
 	StringInfoData	query;
+
+	if (is_greenplum == false)
+	{
+		setup_query = "BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY;\n";
+	}
+	else
+	{
+		setup_query = "BEGIN";
+	}
 
 	initStringInfo(&query);
 	appendStringInfoString(&query, setup_query);
@@ -181,7 +189,7 @@ start_copy_origin_tx(PGconn *conn, const char *snapshot, int pg_version)
 
 	PQclear(res);
 	
-	setup_connection(conn, pg_version, false);
+	setup_connection(conn, pg_version, is_greenplum);
 
 	return 0;
 }

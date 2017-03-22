@@ -195,7 +195,7 @@ connect_to_mysql(mysql_conn_info* hd)
 		ret = mysql_options(m_mysqlConnection, MYSQL_SET_CHARSET_NAME, hd->encoding);
 		if (ret != 0)
 		{
-			fprintf(stderr, "set CHARSET_NAME to %s error: %s", hd->encoding, mysql_error(m_mysqlConnection));
+			fprintf(stderr, "set CHARSET_NAME to %s error: %s\n", hd->encoding, mysql_error(m_mysqlConnection));
 			return NULL;
 		}
 	}
@@ -204,7 +204,7 @@ connect_to_mysql(mysql_conn_info* hd)
 		ret = mysql_options(m_mysqlConnection, MYSQL_SET_CHARSET_DIR, hd->encodingdir);
 		 if (ret != 0)
 		{
-			fprintf(stderr, "set CHARSET_DIR to %s error: %s", hd->encodingdir, mysql_error(m_mysqlConnection));
+			fprintf(stderr, "set CHARSET_DIR to %s error: %s\n", hd->encodingdir, mysql_error(m_mysqlConnection));
 			return NULL;
 		}
 	}
@@ -219,7 +219,7 @@ connect_to_mysql(mysql_conn_info* hd)
 	ret = mysql_options(m_mysqlConnection, MYSQL_OPT_RECONNECT, &m_reConn);
 	 if (ret != 0)
 	{
-		fprintf(stderr, "set OPT_RECONNECT error: %s", mysql_error(m_mysqlConnection));
+		fprintf(stderr, "set OPT_RECONNECT error: %s\n", mysql_error(m_mysqlConnection));
 		return NULL;
 	}
 
@@ -232,7 +232,7 @@ connect_to_mysql(mysql_conn_info* hd)
 				NULL,
 				CLIENT_MULTI_STATEMENTS|CLIENT_MULTI_RESULTS))
 	{
-		fprintf(stderr, "connect error: %s", mysql_error(m_mysqlConnection));
+		fprintf(stderr, "connect error: %s\n", mysql_error(m_mysqlConnection));
 
 		return NULL;
 	}
@@ -240,7 +240,7 @@ connect_to_mysql(mysql_conn_info* hd)
 	ret = mysql_query(m_mysqlConnection, "set unique_checks = 0;");
 	if (ret != 0)
 	{
-		fprintf(stderr, "set unique_checks = 0 error: %s", mysql_error(m_mysqlConnection));
+		fprintf(stderr, "set unique_checks = 0 error: %s\n", mysql_error(m_mysqlConnection));
 		return NULL;
 	}
 
@@ -253,7 +253,7 @@ connect_to_mysql(mysql_conn_info* hd)
  * Entry point for mysql2pgsql
  */
 int 
-mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target_schema)
+mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target_schema, uint32 ignore_error_count)
 {
 	int 		i = 0;
 	Thread_hd th_hd;
@@ -281,18 +281,19 @@ mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target
 	th_hd.nth = nthread;
 	th_hd.desc = desc;
 	th_hd.mysql_src = hd;
+	th_hd.ignore_error_count = ignore_error_count;
 
 	conn_src = connect_to_mysql(hd);
 	if (conn_src == NULL)
 	{
-		fprintf(stderr, "init src conn failed");
+		fprintf(stderr, "init src conn failed.\n");
 		return 1;
 	}
 
 	desc_conn = pglogical_connect(desc, EXTENSION_NAME "_main");
 	if (desc_conn == NULL)
 	{
-		fprintf(stderr, "init desc conn failed: %s", PQerrorMessage(desc_conn));
+		fprintf(stderr, "init desc conn failed: %s\n", PQerrorMessage(desc_conn));
 		return 1;
 	}
 	th_hd.desc_version = PQserverVersion(desc_conn);
@@ -584,6 +585,13 @@ mysql2pgsql_copy_data(void *arg)
 						 PQescapeIdentifier(target_conn, relname,
 											strlen(relname)));
 
+		if (isgp && hd->ignore_error_count > 0)
+		{
+			appendPQExpBuffer(query, " SEGMENT REJECT LIMIT %u",
+									hd->ignore_error_count);
+
+		}
+
 		res2 = PQexec(target_conn, query->data);
 		if (PQresultStatus(res2) != PGRES_COPY_IN)
 		{
@@ -607,7 +615,7 @@ mysql2pgsql_copy_data(void *arg)
 				}
 			
 				/* value of the field is NULL if it is fact NULL */
-				if(lengths[i] >= 0 && row[i] != NULL)
+				if(lengths[i] > 0 && row[i] != NULL)
 				{
 					quote_literal_local_withoid(&s_tmp, row[i], column_oids[i], query);
 				}

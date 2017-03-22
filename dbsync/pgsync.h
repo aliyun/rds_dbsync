@@ -89,6 +89,8 @@ typedef struct Thread_hd
 	const char *snapshot;
 	char		*src;
 	int			src_version;
+	bool		src_is_greenplum;
+
 	char		*slot_name;
 
 	mysql_conn_info	*mysql_src;
@@ -106,6 +108,8 @@ typedef struct Thread_hd
 	int			ntask_com;
 	struct Task_hd		*task_com;
 	pthread_mutex_t	t_lock_com;
+
+	uint32		ignore_error_count;
 }Thread_hd;
 
 typedef struct Task_hd
@@ -126,7 +130,7 @@ typedef struct Task_hd
 extern int db_sync_main(char *src, char *desc, char *local, int nthread);
 
 
-extern int mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target_schema);
+extern int mysql2pgsql_sync_main(char *desc, int nthread, mysql_conn_info *hd, char* target_schema, uint32 ignore_error_count);
 
 
 #ifdef __cplusplus
