@@ -101,6 +101,7 @@ fetch_colmum_info(char *schemaname, char *tabname, MYSQL_RES *my_res, bool is_ta
 			case MYSQL_TYPE_STRING:
 			case MYSQL_TYPE_BIT:
 			case MYSQL_TYPE_BLOB:
+			case MYSQL_TYPE_LONG_BLOB:
 				appendPQExpBuffer(ddl, "%s %s", field->org_name, "text");
 				col_type[i] = TEXTOID;
 				break;
