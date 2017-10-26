@@ -10,7 +10,7 @@
 
 	**注意：**源库 mysql 的连接信息中，用户需要有对所有用户表的读权限。
 
-	```
+```
 [src.mysql]
 host = "192.168.1.1"
 port = "3306"
@@ -21,11 +21,11 @@ encodingdir = "share"
 encoding = "utf8"
 ```
 
-- 目的库 pgsql （包括 Postgresql、PPAS 和 HybridDB ）的连接信息如下：
+- 目的库 pgsql （包括 PostgreSQL、PPAS 和 HybridDB for PostgreSQL ）的连接信息如下：
 
 	**注意：**目的库 pgsql 的连接信息，用户需要对目标表有写的权限。
 
-	```
+```
 [desc.pgsql]
 connect_string = "host=192.168.1.1 dbname=test port=5888  user=test password=pgsql"
 ```
@@ -43,12 +43,12 @@ mysql2pgsql 的用法如下所示：
 
 - -l：可选参数，指定一个文本文件，文件中含有需要同步的表；如果不指定此参数，则同步配置文件中指定数据库下的所有表。```<tables_list_file>```为一个文件名，里面含有需要同步的表集合以及表上查询的条件，其内容格式示例如下：
 
-	```
+```
 table1 : select * from table_big where column1 < '2016-08-05'
 table2 : 
 table3
-table4: select column1, column2 from tableX where column1 != 10
-table5: select * from table_big where column1 >= '2016-08-05'
+table4 : select column1, column2 from tableX where column1 != 10
+table5 : select * from table_big where column1 >= '2016-08-05'
 ```
 
 - -d：可选参数，表示只生成目的表的建表 DDL 语句，不实际进行数据同步。
@@ -65,41 +65,41 @@ table5: select * from table_big where column1 >= '2016-08-05'
 
 全库迁移的操作步骤如下所示：
 
-1. 通过如下命令，获取目的端对应表的 DDL。
+1\. 通过如下命令，获取目的端对应表的 DDL。
 
-	```
+```
 ./mysql2pgsql -d
 ```
 
-1. 根据这些 DDL，再加入 distribution key 等信息，在目的端创建表。
+2\. 根据这些 DDL，再加入 distribution key 等信息，在目的端创建表。
 
-1. 执行如下命令，同步所有表：
+3\. 执行如下命令，同步所有表：
 
-	```
+```
 ./mysql2pgsql
 ```
 
-	此命令会把配置文件中所指定数据库中的所有 mysql 表数据迁移到目的端。过程中使用 5 个线程（即缺省线程数为 5），读取和导入所有涉及的表数据。
+此命令会把配置文件中所指定数据库中的所有 mysql 表数据迁移到目的端。过程中使用 5 个线程（即缺省线程数为 5），读取和导入所有涉及的表数据。
 
 #### 部分表迁移
 
-1. 编辑一个新文件 tab_list.txt，放入如下内容：
+1\. 编辑一个新文件 tab_list.txt，放入如下内容：
 
-	```
-t1
+```
+t1 
 t2 : select * from t2 where c1 > 138888
 ```
 
-1. 执行如下命令，同步指定的 t1 和 t2 表（注意 t2 表只迁移符合 c1 > 138888 条件的数据）：
+2\. 执行如下命令，同步指定的 t1 和 t2 表（注意 t2 表只迁移符合 c1 > 138888 条件的数据）：
 
-	```
+```
 ./mysql2pgsql -l tab_list.txt
 ```
 
 ## mysql2pgsql 二进制安装包下载
 
-下载地址：单击[这里](https://github.com/aliyun/rds_dbsync/releases "这里")。
+下载地址：单击[这里](https://github.com/aliyun/rds_dbsync/releases)。
 
 ## mysql2pgsql 源码编译说明
 
-查看源码编译说明，单击[这里](https://github.com/aliyun/rds_dbsync/blob/master/README.md "这里")。
+查看源码编译说明，单击[这里](https://github.com/aliyun/rds_dbsync/blob/master/README.md)。
