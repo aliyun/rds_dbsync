@@ -616,7 +616,7 @@ mysql2pgsql_copy_data(void *arg)
 				}
 			
 				/* value of the field is NULL if it is fact NULL */
-				if(lengths[i] > 0 && row[i] != NULL)
+				if(lengths[i] >= 0 && row[i] != NULL)
 				{
 					quote_literal_local_withoid(&s_tmp, row[i], column_oids[i], query);
 				}
