@@ -8,7 +8,7 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 
 	功能 pg->pg 全量+增量数据同步
 
-	状态：已开源 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/pgsql2pgsql.md)
+	状态：已开源 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/pgsql2pgsql_ch.md)
 
 2. MySQL -> PostgreSQL/Greenplum（binlog_minner binlog_loader）
 
@@ -26,7 +26,7 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 
 	功能：以表为单位的多线程全量数据迁移
 
-	状态：已开源 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/mysql2pgsql.md)
+	状态：已开源 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/mysql2pgsql_ch.md)
 
 
 ## 项目成员
