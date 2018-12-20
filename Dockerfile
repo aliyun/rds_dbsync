@@ -14,11 +14,11 @@ RUN set -ex \
         echo 'baseurl=https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-$releasever-$basearch'; \
         echo 'enabled=1'; \
         echo 'gpgcheck=0'; \
-	} > /etc/yum.repos.d/dbsync_deps.repo \
-	&& cp -ra /var/log/yum.log /tmp/yum.log.old \
-	&& yum install mysql-community-client mysql-community-devel postgresql10-devel gcc gcc-c++ make unzip -y \
-	&& update-alternatives --install /usr/bin/pg_config pgsql-pg_config /usr/pgsql-10/bin/pg_config 300 \
-	&& ( \
+    } > /etc/yum.repos.d/dbsync_deps.repo \
+    && cp -ra /var/log/yum.log /tmp/yum.log.old \
+    && yum install mysql-community-client mysql-community-devel postgresql10-devel gcc gcc-c++ make unzip -y \
+    && update-alternatives --install /usr/bin/pg_config pgsql-pg_config /usr/pgsql-10/bin/pg_config 300 \
+    && ( \
         cd /tmp/aliyun/dbsync \
         && make \
         && install -D -d /dbsync/bin /dbsync/lib \
