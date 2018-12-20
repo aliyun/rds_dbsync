@@ -1,10 +1,7 @@
-#Change the following according to mysql installation path
 # Minimal requriement: Mysql >= 5.6, Pgsql >= 9.3
-mysql_install_dir=/usr/local/Cellar/mysql/5.7.15
-mysql_include_dir=$(mysql_install_dir)/include/mysql
-mysql_lib_dir=$(mysql_install_dir)/lib64/mysql
-
-pgsql_install_dir=/usr/local/Cellar/postgresql/9.5.4_1
+MYSQL_CONFIG = mysql_config
+mysql_include_dir = $(shell $(MYSQL_CONFIG) --variable=pkgincludedir)
+mysql_lib_dir = $(shell $(MYSQL_CONFIG) --variable=pkglibdir)
 
 PGFILEDESC = "ali_recvlogical"
 NAME = ali_recvlogical
@@ -16,7 +13,7 @@ OBJS = pg_logicaldecode.o pqformat.o stringinfo.o utils.o misc.o pgsync.o ini.o
 PG_CPPFLAGS  = -DFRONTEND -I$(srcdir) -I$(libpq_srcdir) -I$(mysql_include_dir)
 PG_FLAGS  = -DFRONTEND -I$(srcdir) -I$(libpq_srcdir) -I$(mysql_include_dir) 
 
-PG_CONFIG = $(pgsql_install_dir)/bin/pg_config
+PG_CONFIG = pg_config
 pgsql_lib_dir := $(shell $(PG_CONFIG) --libdir)
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
@@ -42,5 +39,5 @@ package:
 	cp -fr demo install/bin
 	cp -fr ali_recvlogical.so install/lib
 	cp -fr mysql2pgsql install/bin
-	cp -fr $(mysql_install_dir)/lib64/mysql/libmysqlclient.so* install/lib
+	cp -fr $(mysql_lib_dir)/libmysqlclient.so* install/lib
 	cp -fr $(pgsql_lib_dir)/libpq.so* install/lib
