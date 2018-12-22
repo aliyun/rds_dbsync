@@ -40,4 +40,4 @@ RUN set -ex \
 
 WORKDIR /dbsync
 
-CMD ['/dbsync/bin/mysql2pgsql', '-h']
+CMD ["mysql2pgsql", "-h"]
