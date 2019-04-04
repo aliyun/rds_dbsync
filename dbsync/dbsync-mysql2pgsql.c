@@ -27,11 +27,57 @@ main(int argc, char **argv)
 	int res_getopt = 0;
 	char *target_schema = NULL;
 	char *table_list_file = NULL;
+        char *cfg_file="my.cfg";
 	char **tables = NULL, **queries = NULL;
 	char	*ignore_copy_error_count_each_table_str = NULL;
 	uint32	ignore_copy_error_count_each_table = 0;
+        
+        while ((res_getopt = getopt(argc, argv, ":l:c:j:dnfhs:b:")) != -1)
+	{
+		switch (res_getopt)
+		{
+			case 'l':
+				table_list_file = optarg;
+				break;
+                        case 'c':
+                                cfg_file = optarg;
+                                break;
+			case 'j':
+				num_thread = atoi(optarg);
+				break;
+			case 'b':
+				buffer_size = 1024 * atoi(optarg);
+				break;
+			case 's':
+				target_schema = optarg;
+				break;
+			case ':':
+				fprintf(stderr, "No value specified for -%c\n", optopt);
+				break;
+			case 'd':
+				get_ddl_only = true;
+				break;
+			case 'n':
+				simple_wo_part = true;
+				break;
+			case 'f':
+				first_col_as_dist_key = true;
+				break;
+			case 'h':
+				fprintf(stderr, "Usage: -l <table list file> -j <thread number> -d -n -f -s -b -h\n");
+				fprintf(stderr, " -l specifies a file with table listed;\n -j specifies number of threads to do the job;\n -d means get DDL only without fetching data;\n -n means no partion info in DDLs;\n -f means taking first column as distribution key;\n -s specifies the target schema;\n -b specifies the buffer size in KB used to sending copy data to target db, the default is 0");
+				return 0;
+			case '?':
+				fprintf(stderr, "Unsupported option: %c", optopt);	
+				break;
+			default:
+				fprintf(stderr, "Parameter parsing error: %c", res_getopt);
+				return -1;
+				
+		}
+	}
 
-	cfg = init_config("my.cfg");
+	cfg = init_config(cfg_file);
 	if (cfg == NULL)
 	{
 		fprintf(stderr, "read config file error, insufficient permissions or my.cfg does not exist");
@@ -67,47 +113,6 @@ main(int argc, char **argv)
 
 	fprintf(stderr, "ignore copy error count %u each table\n", ignore_copy_error_count_each_table);
 
-	while ((res_getopt = getopt(argc, argv, ":l:j:dnfhs:b:")) != -1)
-	{
-		switch (res_getopt)
-		{
-			case 'l':
-				table_list_file = optarg;
-				break;
-			case 'j':
-				num_thread = atoi(optarg);
-				break;
-			case 'b':
-				buffer_size = 1024 * atoi(optarg);
-				break;
-			case 's':
-				target_schema = optarg;
-				break;
-			case ':':
-				fprintf(stderr, "No value specified for -%c\n", optopt);
-				break;
-			case 'd':
-				get_ddl_only = true;
-				break;
-			case 'n':
-				simple_wo_part = true;
-				break;
-			case 'f':
-				first_col_as_dist_key = true;
-				break;
-			case 'h':
-				fprintf(stderr, "Usage: -l <table list file> -j <thread number> -d -n -f -s -b -h\n");
-				fprintf(stderr, " -l specifies a file with table listed;\n -j specifies number of threads to do the job;\n -d means get DDL only without fetching data;\n -n means no partion info in DDLs;\n -f means taking first column as distribution key;\n -s specifies the target schema;\n -b specifies the buffer size in KB used to sending copy data to target db, the default is 0");
-				return 0;
-			case '?':
-				fprintf(stderr, "Unsupported option: %c", optopt);	
-				break;
-			default:
-				fprintf(stderr, "Parameter parsing error: %c", res_getopt);
-				return -1;
-				
-		}
-	}
 	
 	if(table_list_file!= NULL)
 	{
