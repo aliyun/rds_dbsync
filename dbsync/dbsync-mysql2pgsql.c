@@ -7,7 +7,7 @@
 #include "mysql.h"
 #include <unistd.h>
 
-extern bool get_ddl_only; 
+extern bool get_ddl_only;
 extern bool simple_wo_part;
 extern bool first_col_as_dist_key;
 extern int buffer_size;
@@ -30,42 +30,6 @@ main(int argc, char **argv)
 	char **tables = NULL, **queries = NULL;
 	char	*ignore_copy_error_count_each_table_str = NULL;
 	uint32	ignore_copy_error_count_each_table = 0;
-
-	cfg = init_config("my.cfg");
-	if (cfg == NULL)
-	{
-		fprintf(stderr, "read config file error, insufficient permissions or my.cfg does not exist");
-		return 1;
-	}
-
-	memset(&src, 0, sizeof(mysql_conn_info));
-	get_config(cfg, "src.mysql", "host", &src.host);
-	get_config(cfg, "src.mysql", "port", &sport);
-	get_config(cfg, "src.mysql", "user", &src.user);
-	get_config(cfg, "src.mysql", "password", &src.passwd);
-	get_config(cfg, "src.mysql", "db", &src.db);
-	get_config(cfg, "src.mysql", "encodingdir", &src.encodingdir);
-	get_config(cfg, "src.mysql", "encoding", &src.encoding);
-	get_config(cfg, "desc.pgsql", "connect_string", &desc);
-	get_config(cfg, "desc.pgsql", "ignore_copy_error_count_each_table", &ignore_copy_error_count_each_table_str);
-
-	if (src.host == NULL || sport == NULL ||
-		src.user == NULL || src.passwd == NULL ||
-		src.db == NULL || src.encodingdir == NULL ||
-		src.encoding == NULL || desc == NULL)
-	{
-		fprintf(stderr, "parameter error, the necessary parameter is empty");
-		return 1;
-	}
-
-	src.port = atoi(sport);
-
-	if (ignore_copy_error_count_each_table_str)
-	{
-		ignore_copy_error_count_each_table = atoi(ignore_copy_error_count_each_table_str);
-	}
-
-	fprintf(stderr, "ignore copy error count %u each table\n", ignore_copy_error_count_each_table);
 
 	while ((res_getopt = getopt(argc, argv, ":l:j:dnfhs:b:")) != -1)
 	{
@@ -97,19 +61,54 @@ main(int argc, char **argv)
 				break;
 			case 'h':
 				fprintf(stderr, "Usage: -l <table list file> -j <thread number> -d -n -f -s -b -h\n");
-				fprintf(stderr, " -l specifies a file with table listed;\n -j specifies number of threads to do the job;\n -d means get DDL only without fetching data;\n -n means no partion info in DDLs;\n -f means taking first column as distribution key;\n -s specifies the target schema;\n -b specifies the buffer size in KB used to sending copy data to target db, the default is 0");
+				fprintf(stderr, "\n -l specifies a file with table listed;\n -j specifies number of threads to do the job;\n -d means get DDL only without fetching data;\n -n means no partion info in DDLs;\n -f means taking first column as distribution key;\n -s specifies the target schema;\n -b specifies the buffer size in KB used to sending copy data to target db, the default is 0\n -h display this usage manual\n");
 				return 0;
 			case '?':
-				fprintf(stderr, "Unsupported option: %c", optopt);	
+				fprintf(stderr, "Unsupported option: %c", optopt);
 				break;
 			default:
 				fprintf(stderr, "Parameter parsing error: %c", res_getopt);
 				return -1;
-				
+
 		}
 	}
-	
-	if(table_list_file!= NULL)
+
+	cfg = init_config("my.cfg");
+	if (cfg == NULL)
+	{
+		fprintf(stderr, "read config file error, insufficient permissions or my.cfg does not exist");
+		return 1;
+	}
+
+	memset(&src, 0, sizeof(mysql_conn_info));
+	get_config(cfg, "src.mysql", "host", &src.host);
+	get_config(cfg, "src.mysql", "port", &sport);
+	get_config(cfg, "src.mysql", "user", &src.user);
+	get_config(cfg, "src.mysql", "password", &src.passwd);
+	get_config(cfg, "src.mysql", "db", &src.db);
+	get_config(cfg, "src.mysql", "encodingdir", &src.encodingdir);
+	get_config(cfg, "src.mysql", "encoding", &src.encoding);
+	get_config(cfg, "desc.pgsql", "connect_string", &desc);
+	get_config(cfg, "desc.pgsql", "ignore_copy_error_count_each_table", &ignore_copy_error_count_each_table_str);
+
+	if (src.host == NULL || sport == NULL ||
+		src.user == NULL || src.passwd == NULL ||
+		src.db == NULL || src.encodingdir == NULL ||
+		src.encoding == NULL || desc == NULL)
+	{
+		fprintf(stderr, "parameter error, the necessary parameter is empty\n");
+		return 1;
+	}
+
+	src.port = atoi(sport);
+
+	if (ignore_copy_error_count_each_table_str)
+	{
+		ignore_copy_error_count_each_table = atoi(ignore_copy_error_count_each_table_str);
+	}
+	fprintf(stderr, "ignore copy error count %u each table\n", ignore_copy_error_count_each_table);
+
+	if (table_list_file != NULL)
 	{
 		if (load_table_list_file(table_list_file, &tables, &queries))
 		{
@@ -165,7 +164,7 @@ int load_table_list_file(const char *filename, char*** p_tables, char*** p_queri
 		fprintf(stderr, "Error malloc mem for file %s", filename);
 		goto fail;
 	}
-	
+
 	table_list[sz] = '\0';
 	p = table_list;
 	tail = table_list + sz;
@@ -188,14 +187,14 @@ int load_table_list_file(const char *filename, char*** p_tables, char*** p_queri
 				break;
 
 			default:
-				break;		
+				break;
 		}
 		p++;
 	}
 
 	/* Add the last line */
 	num_lines++;
-	
+
 	/* Get memory for table array, with the last element being NULL */
 	table_array = (char **) palloc0((num_lines + 1) * sizeof(char*));
 	query_array = (char **) palloc0((num_lines + 1) * sizeof(char*));
@@ -210,11 +209,11 @@ int load_table_list_file(const char *filename, char*** p_tables, char*** p_queri
 		{
 			/* Get the table name without leanding and trailing blanks
 			  * E.g. following line will generate a table name "tab 1"
-			  *     |    tab 1   :   select * from tab | 
+			  *     |    tab 1   :   select * from tab |
 			  */
 			while (*table_begin == ' ' || *table_begin == '\t')
 				table_begin++;
-			
+
 			table_end = table_begin;
 			while (*table_end != ':' && table_end != p)
 				table_end++;
@@ -245,10 +244,10 @@ int load_table_list_file(const char *filename, char*** p_tables, char*** p_queri
 				cur_table++;
 				fprintf(stderr, "-- Adding table: %s\n", table_begin);
 			}
-			
+
 			table_begin = p + 1;
 		}
-		
+
 		p++;
 	}
 
@@ -259,7 +258,7 @@ int load_table_list_file(const char *filename, char*** p_tables, char*** p_queri
 	return 0;
 
 fail:
-	if (fp) 
+	if (fp)
 		fclose(fp);
 	if (table_list)
 		free(table_list);
@@ -267,7 +266,7 @@ fail:
 		free(table_array);
 	if (query_array)
 		free(query_array);
-	
+
 	return -1;
 }
 
