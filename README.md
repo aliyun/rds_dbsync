@@ -8,13 +8,13 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 
 	功能 pg->pg 全量+增量数据同步
 
-	状态：已开源 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/pgsql2pgsql_ch.md)
+	状态：已开源 [文档](doc/pgsql2pgsql_ch.md)
 
 2. MySQL -> PostgreSQL/Greenplum（binlog_minner binlog_loader）
 
 	功能：基于 MySQL binlog 解析的增量数据同步
 
-	状态：已开放二进制 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/mysql2gp.md)
+	状态：已开放二进制 [文档](doc/mysql2gp.md)
 
 3. PostgreSQL -> PostgreSQL/Greenplum pgsql2gp
 
@@ -26,7 +26,7 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 
 	功能：以表为单位的多线程全量数据迁移
 
-	状态：已开源 [文档](https://github.com/aliyun/rds_dbsync/blob/master/doc/mysql2pgsql_ch.md)
+	状态：已开源 [文档](doc/mysql2pgsql_ch.md)
 
 
 ## 项目成员
@@ -42,13 +42,16 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 2. 执行对应二进制，在二进制所在目录执行 ./mysql2pgsql 
 
 ## 编译步骤
+
+### 从零开始
+
 1. 下载代码
 
-  git clone git@github.com:aliyun/rds_dbsync.git
+  `git clone https://github.com/aliyun/rds_dbsync.git`
 
 2. 下载安装mysql的开发包
 
-  下载repo的rpm：wget  http://dev.mysql.com/get/mysql57-community-release-el6-9.noarch.rpm
+  下载repo的rpm： `wget  http://dev.mysql.com/get/mysql57-community-release-el6-9.noarch.rpm`
 
   安装repo：rpm -Uvh mysql57-community-release-el6-9.noarch.rpm
 
@@ -60,7 +63,7 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 
 3. 下载安装pg的安装包
 
-  下载repo的rpm：wget https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm
+  下载repo的rpm： `wget https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-centos96-9.6-3.noarch.rpm`
 
   安装repo：rpm -ivh pgdg-centos96-9.6-3.noarch.rpm
 
@@ -75,6 +78,9 @@ dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互�
 5. 打包二进制 make package 将生成一个install目录，里面有二进制和lib
 
 6. 执行dbsync：cd install; bin/mysql2pgsql ; bin/pgsql2pgsql ; bin/demo
+
+### 打包docker镜像
+以上手动步骤，已集成进 [Dockerfile](Dockerfile)，运行 `docker build .` 无意外即完成编译过程，镜像内同时包含 `binlog_minner` `binlog_loader` 两个二进制文件。
 
 ## 问题反馈
 有任何问题，请反馈到 https://github.com/aliyun/rds_dbsync issues 或联系 158306855@qq.com

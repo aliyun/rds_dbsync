@@ -107,6 +107,9 @@ fetch_colmum_info(char *schemaname, char *tabname, MYSQL_RES *my_res, bool is_ta
 				break;
 
 			case MYSQL_TYPE_TIMESTAMP:
+				appendPQExpBuffer(ddl, "%s %s", field->org_name, "timestamptz");
+				col_type[i] = TIMESTAMPTZOID;
+				break;
 			case MYSQL_TYPE_DATE:
 			case MYSQL_TYPE_TIME:
 			case MYSQL_TYPE_DATETIME:
