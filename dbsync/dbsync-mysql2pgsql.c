@@ -27,17 +27,21 @@ main(int argc, char **argv)
 	int res_getopt = 0;
 	char *target_schema = NULL;
 	char *table_list_file = NULL;
+        char *cfg_file="my.cfg";
 	char **tables = NULL, **queries = NULL;
 	char	*ignore_copy_error_count_each_table_str = NULL;
 	uint32	ignore_copy_error_count_each_table = 0;
-
-	while ((res_getopt = getopt(argc, argv, ":l:j:dnfhs:b:")) != -1)
+        
+        while ((res_getopt = getopt(argc, argv, ":l:c:j:dnfhs:b:")) != -1)
 	{
 		switch (res_getopt)
 		{
 			case 'l':
 				table_list_file = optarg;
 				break;
+                        case 'c':
+                                cfg_file = optarg;
+                                break;
 			case 'j':
 				num_thread = atoi(optarg);
 				break;
@@ -73,7 +77,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	cfg = init_config("my.cfg");
+	cfg = init_config(cfg_file);
 	if (cfg == NULL)
 	{
 		fprintf(stderr, "read config file error, insufficient permissions or my.cfg does not exist");
@@ -106,6 +110,7 @@ main(int argc, char **argv)
 	{
 		ignore_copy_error_count_each_table = atoi(ignore_copy_error_count_each_table_str);
 	}
+
 	fprintf(stderr, "ignore copy error count %u each table\n", ignore_copy_error_count_each_table);
 
 	if (table_list_file != NULL)
