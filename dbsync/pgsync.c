@@ -153,9 +153,21 @@ copy_table_data(void *arg)
 		res1 = PQexec(origin_conn, query.data);
 		if (PQresultStatus(res1) != PGRES_COPY_OUT)
 		{
-			fprintf(stderr,"table copy failed Query '%s': %s", 
-					query.data, PQerrorMessage(origin_conn));
-			goto exit;
+			// dance365
+			//fprintf(stderr,"table copy failed Query '%s': %s", 
+			//		query.data, PQerrorMessage(origin_conn));
+			//goto exit;
+			
+			args->count++;
+            curr->count++;
+
+			finish_copy_origin_tx(origin_conn);
+			finish_copy_target_tx(target_conn);
+			curr->complete = true;
+			PQclear(res1);
+			resetStringInfo(&query);
+
+			continue;
 		}
 
 		/* Build COPY FROM query. */
@@ -757,19 +769,19 @@ logical_decoding_receive_thread(void *arg)
 			}
 
 			paramValues[0] = buffer->data;
-			res = PQexecPrepared(local_conn, stmtname, 1, paramValues, NULL, NULL, 1);
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			{
-				fprintf(stderr, "exec prepare INSERT INTO sync_sqls failed: %s", PQerrorMessage(local_conn));
-				time_to_abort = true;
-				goto exit;
-			}
-			PQclear(res);
+				res = PQexecPrepared(local_conn, stmtname, 1, paramValues, NULL, NULL, 1);
+				if (PQresultStatus(res) != PGRES_COMMAND_OK)
+				{
+					fprintf(stderr, "exec prepare INSERT INTO sync_sqls failed: %s", PQerrorMessage(local_conn));
+					time_to_abort = true;
+					goto exit;
+				}
+				PQclear(res);
 
 			hander->flushpos = hander->recvpos;
 			if(msg->type == MSGKIND_COMMIT)
 			{
-				res = PQexec(local_conn, "END");
+                    res = PQexec(local_conn, "END");
 				if (PQresultStatus(res) != PGRES_COMMAND_OK)
 				{
 					fprintf(stderr, "decoding receive thread commit a local trans failed: %s", PQerrorMessage(local_conn));
@@ -805,7 +817,7 @@ logical_decoding_apply_thread(void *arg)
 	PGconn *local_conn_u = NULL;
 	PGconn *apply_conn = NULL;
     Oid     type[1];
-	PGresult *resreader = NULL;
+	PGresult *resreader = NULL;	
 	PGresult *applyres = NULL;
 	int		pgversion;
 	bool	is_gp = false;
@@ -851,7 +863,8 @@ logical_decoding_apply_thread(void *arg)
 		char	tmp[16];
 		int		n_commit = 0;
 		int		sqltype = SQL_TYPE_BEGIN;
-
+		
+		int		n_delete = 0;
 		sprintf(tmp, INT64_FORMAT, apply_id);
 		paramValues[0] = tmp;
 
@@ -880,7 +893,7 @@ logical_decoding_apply_thread(void *arg)
 			goto exit;
         }
         PQclear(resreader);
-
+		
 		while(!time_to_abort)
 		{
 			resreader = PQexec(local_conn, "FETCH FROM ali_decoder_cursor");
@@ -926,49 +939,81 @@ logical_decoding_apply_thread(void *arg)
 				sqltype = SQL_TYPE_OTHER_STATMENT;
 			}
 
-			applyres = PQexec(apply_conn, ssql);
-			if (PQresultStatus(applyres) != PGRES_COMMAND_OK)
+			// dance365
+			if(strcmp(ssql, "") == 0)
 			{
-				char	*sqlstate = PQresultErrorField(applyres, PG_DIAG_SQLSTATE);
-				int		errcode = 0;
-				fprintf(stderr, "exec apply id %s, sql %s failed: %s\n", PQgetvalue(resreader, 0, 0), ssql, PQerrorMessage(apply_conn));
-				errcode = atoi(sqlstate);
-				if (errcode == ERROR_DUPLICATE_KEY && sqltype == SQL_TYPE_FIRST_STATMENT)
+				PQclear(resreader);
+				fprintf(stderr, "dance365: fixed sql is empty cause segmention fault\n");
+			}
+			else 
+			{
+				applyres = PQexec(apply_conn, ssql);
+				if (PQresultStatus(applyres) != PGRES_COMMAND_OK)
 				{
-					PQclear(applyres);
-					applyres = PQexec(apply_conn, "END");
-					if (PQresultStatus(applyres) != PGRES_COMMAND_OK)
+					char	*sqlstate = PQresultErrorField(applyres, PG_DIAG_SQLSTATE);
+					int		errcode = 0;
+					// dance365: close for speed ? 
+					//fprintf(stderr, "exec apply id %s, sql %s failed: %s\n", PQgetvalue(resreader, 0, 0), ssql, PQerrorMessage(apply_conn));
+					errcode = atoi(sqlstate);
+					if (errcode == ERROR_DUPLICATE_KEY && sqltype == SQL_TYPE_FIRST_STATMENT)
 					{
-						goto exit;
+						PQclear(applyres);
+						applyres = PQexec(apply_conn, "END");
+						if (PQresultStatus(applyres) != PGRES_COMMAND_OK)
+						{
+							goto exit;
+						}
+						PQclear(applyres);
+						applyres = PQexec(apply_conn, "BEGIN");
+						if (PQresultStatus(applyres) != PGRES_COMMAND_OK)
+						{
+							goto exit;
+						}
+						sqltype = SQL_TYPE_BEGIN;
 					}
-					PQclear(applyres);
-					applyres = PQexec(apply_conn, "BEGIN");
-					if (PQresultStatus(applyres) != PGRES_COMMAND_OK)
+					else
 					{
-						goto exit;
+						// dance365
+						// fprintf(stderr, "dance365: continue when insert into error\n");
+						// PQclear(resreader);
+						// PQclear(applyres);
+						// goto exit;
 					}
-					sqltype = SQL_TYPE_BEGIN;
 				}
-				else
+			
+				if (sqltype == SQL_TYPE_COMMIT)
 				{
-					PQclear(resreader);
-					PQclear(applyres);
-					goto exit;
+					n_commit++;
+					n_delete++;
+					apply_id = atoll(PQgetvalue(resreader, 0, 0));
+					if(n_commit == 5)
+					{
+						n_commit = 0;
+						update_task_status(local_conn_u, false, false, false, apply_id);
+
+						// dance365
+						// clean sync_sqls
+						// if(apply_id >= 0)
+						// {
+						// 	ExecuteSqlStatement(local_conn_u, "delete from sync_sqls where id < (select apply_id - 1000 from db_sync_status limit 1)");
+						// }
+					}
+					if(n_delete == 200) 
+					{
+						n_delete = 0;
+						ExecuteSqlStatement(local_conn_u, "delete from sync_sqls where id < (select apply_id - 1000 from db_sync_status limit 1)");
+					}
 				}
+				PQclear(resreader);
+				PQclear(applyres);
 			}
 
-			if (sqltype == SQL_TYPE_COMMIT)
+			if(n_delete > 0) 
 			{
-				n_commit++;
-				apply_id = atoll(PQgetvalue(resreader, 0, 0));
-				if(n_commit == 5)
-				{
-					n_commit = 0;
-					update_task_status(local_conn_u, false, false, false, apply_id);
-				}
+				n_delete = 0;
+				ExecuteSqlStatement(local_conn_u, "delete from sync_sqls where id < (select apply_id - 1000 from db_sync_status limit 1)");
 			}
-			PQclear(resreader);
-			PQclear(applyres);
+
 		}
 	}
 

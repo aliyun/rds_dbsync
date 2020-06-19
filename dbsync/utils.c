@@ -587,6 +587,13 @@ append_update_statement_key_not_change(Decoder_handler *hander, ALI_PG_DECODE_ME
 			}
 		}
 
+		// dance365
+		if(strcmp(msg->atttype[i], "jsonb") == 0 && new_tuple->svalues[i] == NULL) 
+		{
+			fprintf(stderr, "dance365: continue when type is jsonb && new value is null.%s\n", where->data);
+			continue;
+		}
+
 		if (first)
 		{
 			first = false;
@@ -1734,7 +1741,25 @@ quote_literal_local(Decoder_handler *hander, const char *rawstr, char *type, PQE
 		return;
 	}
 
-	len = strlen(rawstr);
+
+	// dance365
+	if(rawstr == NULL)
+	{
+		len = 0;
+		fprintf(stderr, "dance365: fixed rawstr is null cause segmentation fault\n");
+		if(strcmp(type, "jsonb") == 0)
+		{
+			fprintf(stderr, "dance365: fixed jsonb '' cause jsonb sql format error\n");
+			appendPQExpBuffer(buffer, "'{}'");
+			return;
+		}
+	}
+	else 
+	{
+		len = strlen(rawstr);
+	}
+	
+
 	resetStringInfo(s);
 	appendStringInfoSpaces(s, len * 2 + 3);
 
