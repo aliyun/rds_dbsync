@@ -358,6 +358,10 @@ db_sync_main(char *src, char *desc, char *local, int nthread)
 				fprintf(stderr, "create replication slot failed\n");
 				return 1;
 			}
+			else
+			{
+				th_hd.snapshot = snapshot;
+			}
 
 			th_hd.slot_name = hander->replication_slot;
 		}
