@@ -1,0 +1,4 @@
+comment = 'ali_decoding'
+default_version = '0.0.1'
+module_pathname = '$libdir/ali_decoding'
+relocatable = true
