@@ -155,11 +155,15 @@ append_insert_colname(ALI_PG_DECODE_MESSAGE *msg, PQExpBuffer buffer, Decode_Tup
 	{
 		if (msg->attname[i] == NULL)
 		{
+			if (i+1 < tuple->natt && msg->attname[i+1] != NULL)
+			{
+				appendPQExpBuffer(buffer, ",");
+			}
 			continue;
 		}
 
 		appendPQExpBuffer(buffer, "%s", msg->attname[i]);
-		if(i != tuple->natt - 1)
+		if(i != tuple->natt - 1 && msg->attname[i+1] != NULL)
 		{
 			appendPQExpBuffer(buffer, ",");
 		}
