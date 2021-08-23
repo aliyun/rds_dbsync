@@ -1,3 +1,11 @@
+# hardcode
+1. 修复部分因为Postgres jsonb为空导致的segmentation fault
+2. 增加对于Postgres命令的配置文件和线程数的命令行参数支持
+3. 跳过copy_table_data复制报错，因为源库可以用权限来限制要同步的表
+4. 增加自动清理同步临时表，仅保留最近1000条
+5. 跳过因为未知原因导致的SQL为空的问题
+6. 跳过因为未知原因导致不该有的增量的INSERT报错
+
 # dbsync 项目
 
 dbsync 项目目标是围绕 PostgreSQL Greenplum ,实现易用的数据的互迁功能。
