@@ -165,9 +165,15 @@ pg_decode_startup(LogicalDecodingContext *ctx, OutputPluginOptions *opt,
 			elog(ERROR, "mismatching encodings are not yet supported");
 
 		if (extra_float_digits < 3)
+#if PG_VERSION_NUM < 90500
+			(void) set_config_option("extra_float_digits", "3",
+								 PGC_USERSET, PGC_S_SESSION,
+								 GUC_ACTION_SAVE, true, 0);
+#else
 			(void) set_config_option("extra_float_digits", "3",
 								 PGC_USERSET, PGC_S_SESSION,
 								 GUC_ACTION_SAVE, true, 0, false);
+#endif
 	}
 
 	return;
